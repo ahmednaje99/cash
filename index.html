@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لعبة حساب باقي الفلوس - دينار عراقي</title>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding: 12px; }
+        .card { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 12px; }
+        .bill-box { font-size: 20px; font-weight: bold; color: #d32f2f; background: #ffebee; padding: 8px; border-radius: 10px; border: 1px solid #ffcdd2; }
+        .given-box { font-size: 19px; font-weight: bold; color: #2e7d32; margin-top: 8px; }
+        
+        .notes-container { display: flex; justify-content: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+        .banknote-img { width: 95px; height: 48px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.25); object-fit: cover; border: 1px solid #ccc; }
+
+        .currency-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; max-width: 360px; margin: 12px auto; }
+        .coin-btn { background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; padding: 8px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: 0.1s; }
+        .coin-btn:active { background: #e3f2fd; border-color: #2196f3; transform: scale(0.98); }
+        .coin-btn img { width: 75px; height: 38px; border-radius: 3px; object-fit: cover; border: 1px solid #ccc; }
+        .coin-btn span { font-size: 15px; font-weight: bold; color: #333; }
+
+        .selected-box { font-size: 22px; font-weight: bold; margin: 10px 0; min-height: 40px; background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 10px; line-height: 40px; color: #1565c0; }
+
+        .selected-notes-container { display: flex; justify-content: center; align-items: flex-start; gap: 22px; flex-wrap: wrap; min-height: 76px; margin: 6px 0 14px; padding-top: 4px; }
+        .note-stack { position: relative; width: 95px; height: 48px; margin-top: 16px; }
+        .note-stack img { position: absolute; top: 0; left: 0; width: 95px; height: 48px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.25); object-fit: cover; border: 1px solid #ccc; }
+        .stack-count { position: absolute; bottom: -10px; right: -10px; background: #1565c0; color: white; font-size: 13px; font-weight: bold; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border: 2px solid white; z-index: 999; }
+        
+        .action-row { display: flex; gap: 8px; max-width: 360px; margin: 0 auto; }
+        .action-btn { flex: 1; padding: 12px; font-size: 18px; font-weight: bold; border: none; border-radius: 10px; color: white; cursor: pointer; }
+        .clear-btn { background: #f57c00; }
+        .submit-btn { background: #388e3c; flex: 2; }
+        #message { font-size: 17px; font-weight: bold; margin-top: 10px; min-height: 25px; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h3 style="margin: 3px 0;">لعبة حساب باقي الفلوس</h3>
+        <div class="bill-box">الحساب: <span id="bill-amount">0</span> IQD</div>
+        
+        <div class="given-box">
+            الزبون انطاك: <span id="given-amount">0</span> IQD
+            <div class="notes-container" id="notes-container"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <p style="margin: 3px 0; font-weight: bold; color: #424242;">اضغط على العملات لترجيع الباقي:</p>
+        <div class="selected-box" id="selected-total">0 IQD</div>
+        <div class="selected-notes-container" id="selected-notes-container"></div>
+
+        <div class="currency-grid">
+            <button class="coin-btn" onclick="addMoney(50000)">
+                <img src="50000.jpg" alt="50000">
+                <span>50,000</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(25000)">
+                <img src="25000.jpg" alt="25000">
+                <span>25,000</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(10000)">
+                <img src="10000.jpg" alt="10000">
+                <span>10,000</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(5000)">
+                <img src="5000.jpg" alt="5000">
+                <span>5,000</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(1000)">
+                <img src="1000.jpg" alt="1000">
+                <span>1,000</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(500)">
+                <img src="500.jpg" alt="500">
+                <span>500</span>
+            </button>
+            <button class="coin-btn" onclick="addMoney(250)" style="grid-column: span 2;">
+                <img src="250.jpg" alt="250">
+                <span>250 IQD</span>
+            </button>
+        </div>
+
+        <div class="action-row">
+            <button class="action-btn clear-btn" onclick="clearSelection()">مسح</button>
+            <button class="action-btn submit-btn" onclick="checkAnswer()">تأكيد الجواب</button>
+        </div>
+        <div id="message"></div>
+    </div>
+
+    <script>
+        let currentBill = 0;
+        let currentGiven = 0;
+        let userReturnTotal = 0;
+        let selectedNotes = [];
+
+        const noteImages = {
+            50000: "50000.jpg",
+            25000: "25000.jpg",
+            10000: "10000.jpg",
+            5000:  "5000.jpg",
+            1000:  "1000.jpg",
+            500:   "500.jpg",
+            250:   "250.jpg"
+        };
+
+        function startRound() {
+            let givenNotes = [];
+            let allNotes = [50000, 25000, 10000, 5000, 1000, 500, 250];
+            let isUnrealisticCombo = false;
+            
+            let tries = 0;
+            do {
+                tries++;
+                // 1. توليد قيمة فاتورة واقعية بمضاعفات الـ 250
+                let base = Math.floor(Math.random() * 160) + 4; 
+                currentBill = base * 250; 
+                
+                givenNotes = [];
+                currentGiven = 0;
+
+                // 2. اختيار عدد الأوراق (ورقة وحدة، ورقتين، أو ثلاث) بشكل عشوائي موزون،
+                //    وسحب كل ورقة بشكل عشوائي من كل الفئات المتوفرة (50 ألف نزولاً لـ 250)
+                //    حتى تظهر كل الفئات بنفس الاحتمال تقريباً، مو بس الكبيرة
+                let r = Math.random();
+                let noteCount = r < 0.4 ? 1 : (r < 0.8 ? 2 : 3);
+
+                for (let i = 0; i < noteCount; i++) {
+                    givenNotes.push(allNotes[Math.floor(Math.random() * allNotes.length)]);
+                }
+                currentGiven = givenNotes.reduce((a, b) => a + b, 0);
+
+                // 3. التأكد أن التوليفة منطقية: يجب ألا تكون أي مجموعة جزئية من الأوراق
+                //    (وما تحتاج كل الأوراق المعطاة) كافية لحالها لتغطية الحساب.
+                //    أبسط فحص كافي: لو نطرحنا أصغر ورقة بالمجموعة والباقي لسا يغطي الحساب،
+                //    معناها تلك الورقة الصغيرة زايدة وما إلها داعي (مثل 25+25+0.25 لحساب 34.75)
+                isUnrealisticCombo = givenNotes.length > 1 && (currentGiven - Math.min(...givenNotes)) >= currentBill;
+
+                // احتياط: إذا صار عدد محاولات كبير بدون نتيجة (حساب كبير مع أوراق صغيرة)، أعد المحاولة بعدد أوراق أكبر
+                if (tries > 300) { givenNotes = [50000]; currentGiven = 50000; isUnrealisticCombo = false; if(currentGiven <= currentBill){ currentBill = 25000; } }
+
+            } while (currentGiven <= currentBill || (currentGiven - currentBill) % 250 !== 0 || isUnrealisticCombo);
+
+            // ترتيب الأوراق من الأكبر للأصغر لعرض أجمل
+            givenNotes.sort((a, b) => b - a);
+
+            document.getElementById("bill-amount").innerText = currentBill.toLocaleString('en-US');
+            document.getElementById("given-amount").innerText = currentGiven.toLocaleString('en-US');
+            
+            let container = document.getElementById("notes-container");
+            container.innerHTML = "";
+            givenNotes.forEach(note => {
+                let img = document.createElement("img");
+                img.className = "banknote-img";
+                img.src = noteImages[note] || (note + ".jpg");
+                img.alt = note + " IQD";
+                container.appendChild(img);
+            });
+
+            clearSelection();
+            document.getElementById("message").innerText = "";
+        }
+
+        function addMoney(amount) {
+            userReturnTotal += amount;
+            selectedNotes.push(amount);
+            document.getElementById("selected-total").innerText = userReturnTotal.toLocaleString('en-US') + " IQD";
+            renderSelectedNotes();
+        }
+
+        function renderSelectedNotes() {
+            // نجمع الأوراق حسب الفئة، ونعرض كل فئة كـ "كومة" أوراق فوق بعض
+            let counts = {};
+            selectedNotes.forEach(n => { counts[n] = (counts[n] || 0) + 1; });
+
+            let container = document.getElementById("selected-notes-container");
+            container.innerHTML = "";
+
+            // نعرض الفئات من الأكبر للأصغر
+            Object.keys(counts)
+                .map(Number)
+                .sort((a, b) => b - a)
+                .forEach(denom => {
+                    let count = counts[denom];
+                    let visualLayers = Math.min(count, 5); // نعرض بحد أقصى 5 صور متراكبة بصرياً، والعدد الحقيقي بالرقم
+                    let stack = document.createElement("div");
+                    stack.className = "note-stack";
+
+                    for (let i = 0; i < visualLayers; i++) {
+                        let img = document.createElement("img");
+                        img.src = noteImages[denom] || (denom + ".jpg");
+                        img.alt = denom + " IQD";
+                        img.style.top = (-i * 3) + "px";
+                        img.style.left = (i * 3) + "px";
+                        img.style.zIndex = i;
+                        stack.appendChild(img);
+                    }
+
+                    if (count > 1) {
+                        let badge = document.createElement("div");
+                        badge.className = "stack-count";
+                        badge.innerText = "×" + count;
+                        stack.appendChild(badge);
+                    }
+
+                    container.appendChild(stack);
+                });
+        }
+
+        function clearSelection() {
+            userReturnTotal = 0;
+            selectedNotes = [];
+            document.getElementById("selected-total").innerText = "0 IQD";
+            document.getElementById("selected-notes-container").innerHTML = "";
+        }
+
+        function checkAnswer() {
+            let correctAnswer = currentGiven - currentBill;
+
+            if (userReturnTotal === correctAnswer) {
+                document.getElementById("message").style.color = "#2e7d32";
+                document.getElementById("message").innerText = "عاشت ايدك! جواب صحيح ✅";
+                setTimeout(startRound, 1200);
+            } else {
+                document.getElementById("message").style.color = "#c62828";
+                document.getElementById("message").innerText = "خطأ! الباقي الصحيح: " + correctAnswer.toLocaleString('en-US') + " IQD ❌";
+            }
+        }
+
+        window.onload = function() {
+            startRound();
+        };
+    </script>
+</body>
+</html>
