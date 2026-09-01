@@ -22,7 +22,8 @@
         .selected-box { font-size: 22px; font-weight: bold; margin: 10px 0; min-height: 40px; background: #f5f5f5; border: 2px solid #e0e0e0; border-radius: 10px; line-height: 40px; color: #1565c0; }
 
         .selected-notes-container { display: flex; justify-content: center; align-items: flex-start; gap: 22px; flex-wrap: wrap; min-height: 76px; margin: 6px 0 14px; padding-top: 4px; }
-        .note-stack { position: relative; width: 95px; height: 48px; margin-top: 16px; }
+        .note-stack { position: relative; width: 95px; height: 48px; margin-top: 16px; cursor: pointer; transition: 0.1s; }
+        .note-stack:active { transform: scale(0.94); }
         .note-stack img { position: absolute; top: 0; left: 0; width: 95px; height: 48px; border-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.25); object-fit: cover; border: 1px solid #ccc; }
         .stack-count { position: absolute; bottom: -10px; right: -10px; background: #1565c0; color: white; font-size: 13px; font-weight: bold; border-radius: 50%; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; box-shadow: 0 1px 4px rgba(0,0,0,0.4); border: 2px solid white; z-index: 999; }
         
@@ -168,6 +169,16 @@
             renderSelectedNotes();
         }
 
+        function removeMoney(amount) {
+            // نحذف ورقة وحدة بس من هذه الفئة (آخر وحدة أضيفت منها)
+            let index = selectedNotes.lastIndexOf(amount);
+            if (index === -1) return;
+            selectedNotes.splice(index, 1);
+            userReturnTotal -= amount;
+            document.getElementById("selected-total").innerText = userReturnTotal.toLocaleString('en-US') + " IQD";
+            renderSelectedNotes();
+        }
+
         function renderSelectedNotes() {
             // نجمع الأوراق حسب الفئة، ونعرض كل فئة كـ "كومة" أوراق فوق بعض
             let counts = {};
@@ -185,6 +196,8 @@
                     let visualLayers = Math.min(count, 5); // نعرض بحد أقصى 5 صور متراكبة بصرياً، والعدد الحقيقي بالرقم
                     let stack = document.createElement("div");
                     stack.className = "note-stack";
+                    stack.title = "اضغط لحذف ورقة واحدة";
+                    stack.onclick = function () { removeMoney(denom); };
 
                     for (let i = 0; i < visualLayers; i++) {
                         let img = document.createElement("img");
