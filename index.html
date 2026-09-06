@@ -5,7 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>لعبة حساب باقي الفلوس - دينار عراقي</title>
     <style>
-        body { font-family: system-ui, -apple-system, sans-serif; text-align: center; background-color: #f0f2f5; margin: 0; padding: 12px; }
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            text-align: center; 
+            background-color: #f0f2f5; 
+            margin: 0; 
+            padding: 12px; 
+            touch-action: manipulation; 
+        }
         .card { background: white; padding: 15px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); margin-bottom: 12px; }
         .bill-box { font-size: 20px; font-weight: bold; color: #d32f2f; background: #ffebee; padding: 8px; border-radius: 10px; border: 1px solid #ffcdd2; }
         .given-box { font-size: 19px; font-weight: bold; color: #2e7d32; margin-top: 8px; }
@@ -113,16 +120,12 @@
             let tries = 0;
             do {
                 tries++;
-                // 1. توليد قيمة فاتورة واقعية بمضاعفات الـ 250
                 let base = Math.floor(Math.random() * 160) + 4; 
                 currentBill = base * 250; 
                 
                 givenNotes = [];
                 currentGiven = 0;
 
-                // 2. اختيار عدد الأوراق (ورقة وحدة، ورقتين، أو ثلاث) بشكل عشوائي موزون،
-                //    وسحب كل ورقة بشكل عشوائي من كل الفئات المتوفرة (50 ألف نزولاً لـ 250)
-                //    حتى تظهر كل الفئات بنفس الاحتمال تقريباً، مو بس الكبيرة
                 let r = Math.random();
                 let noteCount = r < 0.4 ? 1 : (r < 0.8 ? 2 : 3);
 
@@ -131,18 +134,12 @@
                 }
                 currentGiven = givenNotes.reduce((a, b) => a + b, 0);
 
-                // 3. التأكد أن التوليفة منطقية: يجب ألا تكون أي مجموعة جزئية من الأوراق
-                //    (وما تحتاج كل الأوراق المعطاة) كافية لحالها لتغطية الحساب.
-                //    أبسط فحص كافي: لو نطرحنا أصغر ورقة بالمجموعة والباقي لسا يغطي الحساب،
-                //    معناها تلك الورقة الصغيرة زايدة وما إلها داعي (مثل 25+25+0.25 لحساب 34.75)
                 isUnrealisticCombo = givenNotes.length > 1 && (currentGiven - Math.min(...givenNotes)) >= currentBill;
 
-                // احتياط: إذا صار عدد محاولات كبير بدون نتيجة (حساب كبير مع أوراق صغيرة)، أعد المحاولة بعدد أوراق أكبر
                 if (tries > 300) { givenNotes = [50000]; currentGiven = 50000; isUnrealisticCombo = false; if(currentGiven <= currentBill){ currentBill = 25000; } }
 
             } while (currentGiven <= currentBill || (currentGiven - currentBill) % 250 !== 0 || isUnrealisticCombo);
 
-            // ترتيب الأوراق من الأكبر للأصغر لعرض أجمل
             givenNotes.sort((a, b) => b - a);
 
             document.getElementById("bill-amount").innerText = currentBill.toLocaleString('en-US');
@@ -170,7 +167,6 @@
         }
 
         function removeMoney(amount) {
-            // نحذف ورقة وحدة بس من هذه الفئة (آخر وحدة أضيفت منها)
             let index = selectedNotes.lastIndexOf(amount);
             if (index === -1) return;
             selectedNotes.splice(index, 1);
@@ -180,20 +176,18 @@
         }
 
         function renderSelectedNotes() {
-            // نجمع الأوراق حسب الفئة، ونعرض كل فئة كـ "كومة" أوراق فوق بعض
             let counts = {};
             selectedNotes.forEach(n => { counts[n] = (counts[n] || 0) + 1; });
 
             let container = document.getElementById("selected-notes-container");
             container.innerHTML = "";
 
-            // نعرض الفئات من الأكبر للأصغر
             Object.keys(counts)
                 .map(Number)
                 .sort((a, b) => b - a)
                 .forEach(denom => {
                     let count = counts[denom];
-                    let visualLayers = Math.min(count, 5); // نعرض بحد أقصى 5 صور متراكبة بصرياً، والعدد الحقيقي بالرقم
+                    let visualLayers = Math.min(count, 5);
                     let stack = document.createElement("div");
                     stack.className = "note-stack";
                     stack.title = "اضغط لحذف ورقة واحدة";
